@@ -74,19 +74,8 @@ function load_mailbox(mailbox) {
   })
   .then(emails => {
     // Print emails
-    // console.log(emails);
-/*    if (emails !== undefined) {
-      document.querySelector('#emails-view').innerHTML = `1 ${emails}`;
-    } else {
-      document.querySelector('#emails-view').innerHTML = `shoot`;
-    } */
+    console.log(emails);
 
-/*     if (emails != undefined) {
-      document.querySelector('#emails-view').innerHTML = `1 ${emails[0].subject}`;
-    } else {
-      document.querySelector('#emails-view').innerHTML = `shoot`;
-    }
- */
     if (emails == undefined) {
       document.querySelector('#emails-view').innerHTML = `Shoot, you have no emails yet!`;
     } else {
@@ -94,17 +83,9 @@ function load_mailbox(mailbox) {
       const container = document.getElementById('emails-view');
       emails.forEach(element => {
         const emailDiv = document.createElement('div');
-        emailDiv.innerHTML = `Your email is ${element.subject}`;
+        emailDiv.innerHTML = `<p><strong>From:</strong> ${element.sender}</p> <p>${element.subject}</p> <p>${element.timestamp}</p>`;
+        emailDiv.style.border = 'solid lightgray';
         container.appendChild(emailDiv);
-        //console.log(element);
-        // document.querySelector('#emails-view').innerHTML = element.value(`1`);
-        // Create a new HTML element (e.g., <div>) to display each value
-        // 1 var newElement = document.createElement('div');
-        // Set the text content of the new element to the value of a specific field from the data
-        // 2 newElement.textContent = element[subject]; // Replace 'field_name' with the actual field name from your model
-        // Append the new element to an existing HTML element (e.g., <div id="data-container">)
-        // 3 document.getElementById('#emails-view').appendChild(newElement);  
-        // document.getElementById('#emails-view').appendChild(element[0].subject);  
       })
     } 
   })
