@@ -46,6 +46,7 @@ function compose_email() {
 
   // Show compose view and hide other views
   document.querySelector('#emails-view').style.display = 'none';
+  document.querySelector('#email-view').style.display = 'none';
   document.querySelector('#compose-view').style.display = 'block';
 
   // Clear out composition fields
@@ -58,6 +59,7 @@ function load_mailbox(mailbox) {
   
   // Show the mailbox and hide other views
   document.querySelector('#emails-view').style.display = 'block';
+  document.querySelector('#email-view').style.display = 'none';
   document.querySelector('#compose-view').style.display = 'none';
 
   // Show the mailbox name
@@ -86,8 +88,61 @@ function load_mailbox(mailbox) {
         emailDiv.innerHTML = `<p><strong>From:</strong> ${element.sender}</p> <p>${element.subject}</p> <p>${element.timestamp}</p>`;
         emailDiv.style.border = 'solid lightgray';
         container.appendChild(emailDiv);
+        emailDiv.addEventListener('click', () => load_email(`${element.id}`));
       })
     } 
   })
   .catch(error => console.error('Error fetching observations:', error));
+}
+
+function load_email(email) {
+  document.querySelector('#emails-view').style.display = 'none';
+  document.querySelector('#email-view').style.display = 'block';
+  document.querySelector('#compose-view').style.display = 'none';
+
+  fetch(`/emails/${email}/`)
+  .then(response => {
+    if (!response.ok) {
+      throw new Error('Network response was not ok');
+    } 
+    return response.json();
+  })
+  .then(content => {
+    console.log(content);
+    if (content == undefined) {
+      document.querySelector('#email-view').innerHTML = 'Shoot, no email to display';
+    } else {
+      const newContainer = document.getElementById('email-view');
+      if (newContainer.childNodes.length > 1) {
+        newContainer.textContent = '';
+        const contentDiv = document.createElement('div');
+        contentDiv.innerHTML = `<p><strong>From:</strong> ${content.sender}</p> <p><strong>To:</strong> ${content.recipients}</p> <p><strong>Subject:</strong> ${content.subject}</p> <p><strong>Timestamp:</strong> ${content.timestamp}</p>`;
+        newContainer.appendChild(contentDiv);
+        const replyEmail = document.createElement('button');
+        replyEmail.textContent = 'Reply';
+        newContainer.appendChild(replyEmail);
+        const archiveEmail = document.createElement('button');
+        archiveEmail.textContent = 'Archive';
+        newContainer.appendChild(archiveEmail);
+        const bodyDiv = document.createElement('div');
+        bodyDiv.innerHTML = `${content.body}`;
+        newContainer.appendChild(bodyDiv);
+        bodyDiv.style.borderTop = 'solid lightgray';
+      } else {
+        const contentDiv = document.createElement('div');
+        contentDiv.innerHTML = `<p><strong>From:</strong> ${content.sender}</p> <p><strong>To:</strong> ${content.recipients}</p> <p><strong>Subject:</strong> ${content.subject}</p> <p><strong>Timestamp:</strong> ${content.timestamp}</p>`;
+        newContainer.appendChild(contentDiv);
+        const replyEmail = document.createElement('button');
+        replyEmail.textContent = 'Reply';
+        newContainer.appendChild(replyEmail);
+        const archiveEmail = document.createElement('button');
+        archiveEmail.textContent = 'Archive';
+        newContainer.appendChild(archiveEmail);
+        const bodyDiv = document.createElement('div');
+        bodyDiv.innerHTML = `${content.body}`;
+        newContainer.appendChild(bodyDiv);
+        bodyDiv.style.borderTop = 'solid lightgray';
+      }
+    }
+  })
 }
