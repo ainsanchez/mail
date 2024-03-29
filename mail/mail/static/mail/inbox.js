@@ -53,6 +53,10 @@ function compose_email() {
   document.querySelector('#compose-recipients').value = '';
   document.querySelector('#compose-subject').value = '';
   document.querySelector('#compose-body').value = '';
+
+  document.querySelector('sendButton').addEventListener('click', () => {
+    load_mailbox('inbox');
+  })
 }
 
 function load_mailbox(mailbox) {
@@ -88,6 +92,11 @@ function load_mailbox(mailbox) {
         emailDiv.innerHTML = `<p><strong>From:</strong> ${element.sender}</p> <p>${element.subject}</p> <p>${element.timestamp}</p>`;
         emailDiv.style.border = 'solid lightgray';
         container.appendChild(emailDiv);
+        if (element.read == false) {
+          emailDiv.style.backgroundColor = 'blue';
+        } else {
+          emailDiv.style.backgroundColor = 'lightgray';
+        }
         emailDiv.addEventListener('click', () => load_email(`${element.id}`));
       })
     } 
@@ -99,6 +108,14 @@ function load_email(email) {
   document.querySelector('#emails-view').style.display = 'none';
   document.querySelector('#email-view').style.display = 'block';
   document.querySelector('#compose-view').style.display = 'none';
+
+  // Change the email to read
+  fetch(`/emails/${email}/`, {
+    method: 'PUT',
+    body: JSON.stringify({
+        read: true
+    })
+  })
 
   fetch(`/emails/${email}/`)
   .then(response => {
@@ -115,34 +132,58 @@ function load_email(email) {
       const newContainer = document.getElementById('email-view');
       if (newContainer.childNodes.length > 1) {
         newContainer.textContent = '';
-        const contentDiv = document.createElement('div');
-        contentDiv.innerHTML = `<p><strong>From:</strong> ${content.sender}</p> <p><strong>To:</strong> ${content.recipients}</p> <p><strong>Subject:</strong> ${content.subject}</p> <p><strong>Timestamp:</strong> ${content.timestamp}</p>`;
-        newContainer.appendChild(contentDiv);
-        const replyEmail = document.createElement('button');
-        replyEmail.textContent = 'Reply';
-        newContainer.appendChild(replyEmail);
-        const archiveEmail = document.createElement('button');
+      } 
+      const contentDiv = document.createElement('div');
+      contentDiv.innerHTML = `<p><strong>From:</strong> ${content.sender}</p> <p><strong>To:</strong> ${content.recipients}</p> <p><strong>Subject:</strong> ${content.subject}</p> <p><strong>Timestamp:</strong> ${content.timestamp}</p>`;
+      newContainer.appendChild(contentDiv);
+      const replyEmail = document.createElement('button');
+      replyEmail.innerText = 'Reply';
+      
+      // Add functionality to reply button
+      replyEmail.addEventListener('click', () => {
+        // Show compose view and hide other views
+        document.querySelector('#emails-view').style.display = 'none';
+        document.querySelector('#email-view').style.display = 'none';
+        document.querySelector('#compose-view').style.display = 'block';
+
+        // Pre-fill composition fields
+        document.querySelector('#compose-recipients').value = `${content.sender}`;
+        document.querySelector('#compose-subject').value = `Re: ${content.subject}`;
+        document.querySelector('#compose-body').innerHTML = `On ${content.timestamp} ${content.sender} wrote:\n\n${content.body}`;
+      });
+
+      newContainer.appendChild(replyEmail);
+      const archiveEmail = document.createElement('button');
+      if (content.archived == false) {
         archiveEmail.textContent = 'Archive';
-        newContainer.appendChild(archiveEmail);
-        const bodyDiv = document.createElement('div');
-        bodyDiv.innerHTML = `${content.body}`;
-        newContainer.appendChild(bodyDiv);
-        bodyDiv.style.borderTop = 'solid lightgray';
+        // Add functionality to archive button
+        archiveEmail.addEventListener('click', () => {
+          fetch(`/emails/${email}/`, {
+            method: 'PUT',
+            body: JSON.stringify({
+                archived: true
+            })
+          })
+          load_mailbox('inbox');
+        });
       } else {
-        const contentDiv = document.createElement('div');
-        contentDiv.innerHTML = `<p><strong>From:</strong> ${content.sender}</p> <p><strong>To:</strong> ${content.recipients}</p> <p><strong>Subject:</strong> ${content.subject}</p> <p><strong>Timestamp:</strong> ${content.timestamp}</p>`;
-        newContainer.appendChild(contentDiv);
-        const replyEmail = document.createElement('button');
-        replyEmail.textContent = 'Reply';
-        newContainer.appendChild(replyEmail);
-        const archiveEmail = document.createElement('button');
-        archiveEmail.textContent = 'Archive';
-        newContainer.appendChild(archiveEmail);
-        const bodyDiv = document.createElement('div');
-        bodyDiv.innerHTML = `${content.body}`;
-        newContainer.appendChild(bodyDiv);
-        bodyDiv.style.borderTop = 'solid lightgray';
+        archiveEmail.textContent = 'Unarchive';
+        // Add functionality to archive button
+        archiveEmail.addEventListener('click', () => {
+          fetch(`/emails/${email}/`, {
+            method: 'PUT',
+            body: JSON.stringify({
+                archived: false
+            })
+          })
+          load_mailbox('inbox');
+        });
       }
+      newContainer.appendChild(archiveEmail);
+      const bodyDiv = document.createElement('div');
+      bodyDiv.innerHTML = `${content.body}`;
+      newContainer.appendChild(bodyDiv);
+      bodyDiv.style.borderTop = 'solid lightgray';
     }
   })
 }
